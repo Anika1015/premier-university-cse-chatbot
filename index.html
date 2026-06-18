@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premier University, CSE Department FAQ Chatbot</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f4f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .chat-container {
+      width: 480px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+      overflow: hidden;
+    }
+
+    .chat-header {
+      background: #1a3c6e;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .chat-header h2 { font-size: 20px; margin-bottom: 4px; }
+    .chat-header p  { font-size: 13px; opacity: 0.8; }
+
+    .chat-box {
+      height: 420px;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .message {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .bot-message {
+      background: #f0f4f8;
+      color: #1a3c6e;
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+    }
+
+    .user-message {
+      background: #1a3c6e;
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+
+    .chat-input {
+      display: flex;
+      padding: 16px;
+      border-top: 1px solid #e0e0e0;
+      gap: 10px;
+    }
+
+    .chat-input input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid #ccc;
+      border-radius: 24px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .chat-input input:focus { border-color: #1a3c6e; }
+
+    .chat-input button {
+      background: #1a3c6e;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 24px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .chat-input button:hover { background: #2e75b6; }
+
+    .suggestions {
+      padding: 0 16px 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .suggestion-btn {
+      background: #e8f0fb;
+      color: #1a3c6e;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .suggestion-btn:hover { background: #2e75b6; color: white; }
+
+    .typing {
+      font-size: 13px;
+      color: #888;
+      padding: 0 20px;
+      height: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="chat-container">
+  <div class="chat-header">
+    <h2>🎓Premier University, CSE Department <br> FAQ Chatbot</h2>
+    <p>Ask me anything about admissions, fees, exams & campus life</p>
+  </div>
+
+  <div class="chat-box" id="chatBox">
+    <div class="message bot-message">
+      👋 Hello! I am your Premier University, CSE Department FAQ Assistant.<br><br>
+      I can help you with information about <strong>admissions, fees, exams, results, library, payment </strong> and more.<br><br>
+      Type your question or click a suggestion below!
+    </div>
+  </div>
+
+  <div class="typing" id="typing"></div>
+
+  <div class="suggestions">
+    <button class="suggestion-btn" onclick="sendSuggestion('How to apply for admission?')">Admission</button>
+    <button class="suggestion-btn" onclick="sendSuggestion('What is the tuition fee?')">Tuition Fee</button>
+    <button class="suggestion-btn" onclick="sendSuggestion('When are the exams?')">Exams</button>
+    <button class="suggestion-btn" onclick="sendSuggestion('How to get scholarship?')">Scholarship</button>
+    <button class="suggestion-btn" onclick="sendSuggestion('Library timings?')">Library</button>
+    <button class="suggestion-btn" onclick="sendSuggestion('Contact information')">Contact</button>
+  </div>
+
+  <div class="chat-input">
+    <input type="text" id="userInput" placeholder="Type your question here..."
+           onkeypress="if(event.key==='Enter') sendMessage()">
+    <button onclick="sendMessage()">Send</button>
+  </div>
+</div>
+
+<script>
+  function appendMessage(text, sender) {
+    const chatBox = document.getElementById("chatBox");
+    const div = document.createElement("div");
+    div.className = "message " + (sender === "user" ? "user-message" : "bot-message");
+    div.innerHTML = text;
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  function sendMessage() {
+    const input = document.getElementById("userInput");
+    const message = input.value.trim();
+    if (!message) return;
+
+    appendMessage(message, "user");
+    input.value = "";
+
+    document.getElementById("typing").textContent = "Bot is typing...";
+
+    fetch("/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: message })
+    })
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("typing").textContent = "";
+      appendMessage(data.response, "bot");
+    });
+  }
+
+  function sendSuggestion(text) {
+    document.getElementById("userInput").value = text;
+    sendMessage();
+  }
+</script>
+
+</body>
+</html>
