@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify
+from rapidfuzz import fuzz
 
 app = Flask(__name__)
 
@@ -13,8 +14,8 @@ faqs = {
     "documents": "Required documents:Original Admit Card from the Premier University Admission Test, NID/Birth Certificate, SSC and HSC Certificates & Transcripts, passport-size photos and application fee receipt.",
 
     # Fees
-    "fee": " The total estimated cost for the 4-year degree generally ranges between Tk. 3.5 Lakh to Tk. 4.5 Lakh, depending on waivers and total credit hours completed.Contact accounts office for full details.",
-    "tuition": "First Semester Cost: Tk. 61,120 (includes admission and first-semester fees).The total estimated tuition averaging roughly Tk. 43,000 to Tk. 45,000 per semester. Contact accounts office for full details.",
+    "total tuition fee": "The total estimated cost for the 4-year degree generally ranges between Tk. 3.5 Lakh to Tk. 4.5 Lakh, depending on waivers and total credit hours completed.Contact accounts office for full details.",
+    "per semester fee": "First Semester Cost: Tk. 61,120 (includes admission and first-semester fees).The total estimated averaging roughly Tk. 43,000 to Tk. 45,000 per semester. Contact accounts office for full details.",
     "scholarship": "Scholarships are available for meritorious and financially needy students. Apply at the scholarship office within first month of admission.",
     "payment": "Payment Method: Must be deposited at any United Commercial Bank Ltd. (UCB) branch.",
     "waiver": "Tuition fee waivers are available based on SSC and HSC results, which can significantly lower your overall semester expenses Contact the scholarship committee for details.",
@@ -28,7 +29,7 @@ faqs = {
     "certificate": "Certificates at Premier University (including CSE graduates) are issued by the Office of the Controller of Examinations, located at the GEC Campus.Location: 541, O.R. Nizam Road, GEC Circle, Chattogram.Processing Times: Regular certificates and transcripts take ~ 23 working days, while urgent requests take ~ 5 working days.",
 
     # Campus
-    "library": "The library is open Saturday to Wednesday, 8.30 am - 5.30 pm. It has CSE textbooks, Printed Journals, Online E-books and online journal access.Students can borrow general books for a set period. Lost or damaged books incur a replacement fee of twice the current market value.",
+    "library": "The library is open Saturday to Wednesday, 8.30 am to 5.30 pm. It has CSE textbooks, Printed Journals, Online E-books and online journal access.Students can borrow general books for a set period. Lost or damaged books incur a replacement fee of twice the current market value.",
     "cafeteria": "The cafeteria is open 8:30 AM to 5:30 PM on all working days. It offers affordable snacks starting from 5 BDT.",
     "hostel": "Separate hostels are NOT available. ",
     "transport": "University transport system is NOT available.",
@@ -51,12 +52,33 @@ faqs = {
 def get_response(user_input):
     user_input = user_input.lower().strip()
 
-    # Check if any keyword matches
-    for keyword, response in faqs.items():
-        if keyword in user_input:
-            return response
+    matches = []
 
-    # Default response
+    for keyword, response in faqs.items():
+
+        if keyword in user_input:
+            matches.append((100, response))
+
+        else:
+            score = fuzz.partial_ratio(keyword, user_input)
+            if score >= 70:
+                matches.append((score, response))
+
+    if matches:
+        # sort best matches first
+        matches.sort(reverse=True, key=lambda x: x[0])
+
+        # remove duplicates (important)
+        seen = set()
+        final_answers = []
+
+        for score, response in matches:
+            if response not in seen:
+                final_answers.append(response)
+                seen.add(response)
+
+        return "<br><br>".join(final_answers)
+
     return ("I'm sorry, I don't have information on that topic yet. "
             "Please contact the Premier University, CSE department directly at info@puc.ac.bd "
             "or call +8801313044515-17. You can also type 'help' to see what I can answer.")
